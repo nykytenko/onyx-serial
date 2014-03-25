@@ -1,0 +1,29 @@
+{
+	"name": "onyx-serial",
+	"description": "Serial port interface from D.",
+	"license": "MIT",
+	"copyright": "Copyright © 2014, onyx",
+	"authors": ["Oleg Nykytenko (onyx)"],
+
+	"targetPath":"./bin",
+
+	"configurations": [
+		{
+			"name":"test",
+			"targetType": "executable",
+			"sourcePaths": ["test/", "source/"],
+			"mainSourceFile": "test/main.d",
+			"versions": ["vTest"]
+		},
+		{
+			"name": "library",
+			"targetType": "library",
+			"excludedSourceFiles": ["test/main.d"],
+		}
+	],
+	
+	"dependencies": {
+		"onyx-config": ">=1.0.0-beta.1",
+	}
+
+}
