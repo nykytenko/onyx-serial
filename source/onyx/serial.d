@@ -79,13 +79,11 @@ class OxSerialPort
 	private Impl impl;
 
 	private string _name;
-	private int _speed;
-	private int _timeOut;
 
-	private string name(){return _name;}
-	private int speed(){return _speed;}
-	private int timeOut(){return _timeOut;}
+	private int speed;
+	private int timeOut;
 
+	string name(){return _name;}
 
 
 	this(string port)
@@ -103,15 +101,15 @@ class OxSerialPort
 	this(ConfBundle bundle)
 	{
 		impl =  Impl();
-		string name()
+		string extractName()
 		{
-			auto portType = bundle.getValue("port", "name");
-			if (!portType.startsWith("/dev/tty"))
-				throw new ConfException("port name value must be start from \"/dev/tty*\" (not \"" ~ portType ~ "\")");
-			return portType;
+			auto portName = bundle.getValue("port", "name");
+			if (!portName.startsWith("/dev/tty"))
+				throw new ConfException("port name value must be start from \"/dev/tty*\" (not \"" ~ portName ~ "\")");
+			return portName;
 		}
 
-		int speed()
+		int extractSpeed()
 		{
 			int portSpeed = bundle.getIntValue("port", "speed");
 			if (!impl.checkSpeed(portSpeed))
@@ -119,7 +117,7 @@ class OxSerialPort
 			return portSpeed;
 		}
 
-		int timeOut()
+		int extractTimeOut()
 		{
 			int portTimeOut = bundle.getIntValue("port", "time_out");
 			if (portTimeOut < 0 )
@@ -127,9 +125,9 @@ class OxSerialPort
 			return portTimeOut;
 		}
 
-		_name = name();
-		_speed = speed();
-		_timeOut = timeOut(); // in ms
+		_name = extractName();
+		speed = extractSpeed();
+		timeOut = extractTimeOut(); // in ms
 	}
 
 
@@ -152,6 +150,18 @@ class OxSerialPort
 
 
 	/**
+	 * Check is open serial port
+	 *
+	 * Throws: nothrow
+	 */
+	 nothrow bool isOpen()
+	 {
+	 	return impl.isOpen();
+	 }
+
+
+
+	/**
 	 * Setup serial port
 	 *
 	 * Throws: SerialPortOpenException
@@ -162,17 +172,32 @@ class OxSerialPort
 	}
 
 
-
+	/**
+	 * Close serial port 
+	 *
+	 * Throws: SerialPortCloseException
+	 */
 	void close()
 	{
 		impl.close();
 	}
 
+
+	/**
+	 * write data to port
+	 *
+	 * Throws: SerialPortIOException
+	 */
 	void write(byte[] buf)
 	{
 		impl.write(buf);
 	}
 
+	/**
+	 * read data from port
+	 *
+	 * Throws: SerialPortIOException
+	 */
 	byte[] read(int byteCount)
 	{
 		return impl.read(byteCount);
@@ -226,7 +251,7 @@ private struct PosixImpl
 		}
 		else
 		{
-			new SerialPortOpenException(portName, "Can't open serial port");
+			throw new SerialPortOpenException(portName, "Can't open serial port");
 		}
  	}
 
@@ -240,7 +265,7 @@ private struct PosixImpl
  	{
 		if (core.sys.posix.unistd.close(handle) == -1)
 		{
-			new SerialPortCloseException(portName, "Can't close serial port");
+			throw new SerialPortCloseException(portName, "Can't close serial port");
 		}
 
  	}
@@ -258,6 +283,7 @@ private struct PosixImpl
 
 		/* set flags */
 		setFlags();
+
  	}
 
 
@@ -273,13 +299,21 @@ private struct PosixImpl
 			throw new SerialPortOpenException(portName, "Invalid speed value: " ~ to!string(speed));
 		}
 
+		import std.stdio;
+		import std.conv;
+		writeln("*****************speed = ", to!string(speed));
+
 		auto set = getSettings();
 		speed_t baud = getBaudRateByNum(speed);
 
- 		if(cfsetispeed(&set, baud) < 0 || cfsetospeed(&set, baud) < 0)
+		writeln("cfsetispeed(&set, baud) = ", to!string(cfsetispeed(&set, baud)));
+		writeln("*****************Bspeed = ", to!string(baud));
+		writeln(format("get cfgetispeed = %02X", cfgetispeed(&set)));
+ 		if((cfsetispeed(&set, baud) < 0) || (cfsetospeed(&set, baud) < 0) || (tcsetattr(handle, TCSANOW, &set) == -1))
  		{
  			throw new SerialPortOpenException(portName, "Can't set speed " ~ to!string(speed) ~ " for serial port");
  		}
+
  	}
 
 
