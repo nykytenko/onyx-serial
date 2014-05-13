@@ -188,7 +188,7 @@ class OxSerialPort
 	 *
 	 * Throws: SerialPortIOException
 	 */
-	void write(byte[] buf)
+	void write(ubyte[] buf)
 	{
 		impl.write(buf);
 	}
@@ -198,7 +198,7 @@ class OxSerialPort
 	 *
 	 * Throws: SerialPortIOException
 	 */
-	byte[] read(int byteCount)
+	ubyte[] read(int byteCount)
 	{
 		return impl.read(byteCount);
 	}
@@ -375,7 +375,7 @@ private struct PosixImpl
 	 *
 	 * Throws: SerialPortIOException
 	 */
- 	void write(byte[] buf)
+ 	void write(ubyte[] buf)
  	{
  		if (core.sys.posix.unistd.write(handle, cast(void *)buf.ptr, buf.length) == -1)
  		{
@@ -389,9 +389,12 @@ private struct PosixImpl
 	 *
 	 * Throws: SerialPortIOException
 	 */
- 	byte[] read(int byteCount)
+ 	ubyte[] read(int byteCount)
  	{
- 		byte[] data = new byte[byteCount];
+ 		import std.stdio;
+ 		writeln("point 1, byteCount = ", to!string(byteCount));
+
+ 		ubyte[] data = new ubyte[byteCount];
 
  		size_t byteRemains = byteCount;
 
@@ -411,6 +414,8 @@ private struct PosixImpl
 	 			ssize_t chanck = core.sys.posix.unistd.read(handle, cast(void*)(data.ptr + byteCount - byteRemains), byteRemains);
 	 			if (chanck == -1)
 	 			{
+	 				import std.stdio;
+	 				writeln("ERROR!!!!!!!!");
 	 				throw new SerialPortIOException(portName, "Error reading from serial port");
 	 			}
 	 			byteRemains -= chanck;
