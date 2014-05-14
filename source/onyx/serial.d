@@ -18,6 +18,7 @@ import onyx.config.bundle;
 
 import std.string;
 import std.conv;
+import core.thread;
 
 
 
@@ -35,7 +36,7 @@ abstract class SerialPortException: std.stdio.StdioException
 
 
 /**
- * Serial port exception
+ * Serial port open exception
  */
 class SerialPortOpenException:SerialPortException
 {
@@ -48,7 +49,7 @@ class SerialPortOpenException:SerialPortException
 
 
 /**
- * Serial port exception
+ * Serial port close exception
  */
 class SerialPortCloseException:SerialPortException
 {
@@ -61,9 +62,22 @@ class SerialPortCloseException:SerialPortException
 
 
 /**
- * Serial port exception
+ * Serial port IO exception
  */
 class SerialPortIOException:SerialPortException
+{
+
+	this(string port, string msg)
+	{
+		super(port, msg);
+	}
+}
+
+
+/**
+ * Serial port timeout exception
+ */
+class SerialPortTimeOutException:SerialPortException
 {
 
 	this(string port, string msg)
@@ -230,7 +244,7 @@ private struct PosixImpl
 
 	private string portName;
 
-	/* in hnsecs */
+	/* in msecs */
 	private int readTimeOut = 0;
 
 
@@ -247,7 +261,7 @@ private struct PosixImpl
 		{
 			handle = h;
 			this.portName = portName;
-			this.readTimeOut = readTimeOut*100;
+			this.readTimeOut = readTimeOut;
 		}
 		else
 		{
@@ -391,20 +405,17 @@ private struct PosixImpl
 	 */
  	ubyte[] read(int byteCount)
  	{
- 		import std.stdio;
- 		writeln("point 1, byteCount = ", to!string(byteCount));
-
  		ubyte[] data = new ubyte[byteCount];
 
  		size_t byteRemains = byteCount;
 
- 		enum timeOutTickMax = 100_00; // hnsecs
- 		auto timeOutTick = (readTimeOut >= timeOutTickMax)?timeOutTickMax:readTimeOut;
+ 		enum timeOutTickMax = 10; // msecs
+ 		auto timeOutTick = cast(int)((readTimeOut >= timeOutTickMax)?timeOutTickMax:readTimeOut);
 
 		/* start time in hnsecs */
 		import std.datetime;
  		auto startTime = Clock.currStdTime();
- 		while((byteRemains > 0) && (readTimeOut > (Clock.currStdTime() - startTime)))
+ 		while((byteRemains > 0) && (readTimeOut > (Clock.currStdTime() - startTime)/(1000*10)))
  		{
 	 		pollfd pfd = pollfd(handle, POLLIN, 0);
 
@@ -414,12 +425,14 @@ private struct PosixImpl
 	 			ssize_t chanck = core.sys.posix.unistd.read(handle, cast(void*)(data.ptr + byteCount - byteRemains), byteRemains);
 	 			if (chanck == -1)
 	 			{
-	 				import std.stdio;
-	 				writeln("ERROR!!!!!!!!");
 	 				throw new SerialPortIOException(portName, "Error reading from serial port");
 	 			}
 	 			byteRemains -= chanck;
 	 		}
+ 			if (byteRemains > 0)
+ 			{
+ 				Thread.sleep( dur!("msecs")(timeOutTick));
+ 			}
 	 	}
  		return data;
  	}
