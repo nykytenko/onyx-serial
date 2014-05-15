@@ -436,7 +436,7 @@ private struct PosixImpl
 	 	}
 	 	//if (byteRemains)
 	 	//	throw new SerialPortTimeOutException(portName, "Port data read timeout, needed: "~to!string(byteCount)~"bytes, received: "~to!string(data.length)~)
-	 	data = data[0..(byteCount-byteRemains];
+	 	data = data[0..(byteCount-byteRemains)];
  		return data;
  	}
 
