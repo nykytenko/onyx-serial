@@ -7,5 +7,5 @@ void main()
 unittest
 {
 	import std.stdio;
-	writefln("Running unit tests.");
+	writeln("Running unit tests.");
 }

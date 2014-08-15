@@ -409,7 +409,7 @@ private struct PosixImpl
 
  		size_t byteRemains = byteCount;
 
- 		enum timeOutTickMax = 10; // msecs
+ 		enum timeOutTickMax = 1; // msecs
  		auto timeOutTick = cast(int)((readTimeOut >= timeOutTickMax)?timeOutTickMax:readTimeOut);
 
 		/* start time in hnsecs */
@@ -594,10 +594,10 @@ version (vTest)
 		port1.open();
 		port2.open();
 
-		port1.write(cast(byte[])[0x22, 0x33, 0xCC]);
+		port1.write(cast(ubyte[])[0x22, 0x33, 0xCC]);
 
-		byte[] buf = port2.read(3);
-		assert (buf == cast(byte[])[0x22, 0x33, 0xCC]);
+		ubyte[] buf = port2.read(3);
+		assert (buf == cast(ubyte[])[0x22, 0x33, 0xCC]);
 
 		port1.close();
 		port2.close();
