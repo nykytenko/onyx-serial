@@ -112,12 +112,12 @@ class OxSerialPort
 	 *
 	 * Throws: ConfException
 	 */
-	this(ConfBundle bundle)
+	this(immutable ConfBundle bundle)
 	{
 		impl =  Impl();
 		string extractName()
 		{
-			auto portName = bundle.getValue("port", "name");
+			auto portName = bundle.value("port", "name");
 			if (!portName.startsWith("/dev/tty"))
 				throw new ConfException("port name value must be start from \"/dev/tty*\" (not \"" ~ portName ~ "\")");
 			return portName;
@@ -125,7 +125,7 @@ class OxSerialPort
 
 		int extractSpeed()
 		{
-			int portSpeed = bundle.getIntValue("port", "speed");
+			int portSpeed = bundle.intValue("port", "speed");
 			if (!impl.checkSpeed(portSpeed))
 				throw new ConfException(" port speed value must be from standard line (not \"" ~ to!string(portSpeed) ~ "\")");
 			return portSpeed;
@@ -133,7 +133,7 @@ class OxSerialPort
 
 		int extractTimeOut()
 		{
-			int portTimeOut = bundle.getIntValue("port", "time_out");
+			int portTimeOut = bundle.intValue("port", "time_out");
 			if (portTimeOut < 0 )
 				throw new ConfException(" port time_out value must be > 0 (not \"" ~ to!string(portTimeOut) ~ "\")");
 			return portTimeOut;
@@ -588,8 +588,8 @@ version (vTest)
 			 "time_out = 1500"];
 
 
-		auto port1 = new OxSerialPort(ConfBundle(s1));
-		auto port2 = new OxSerialPort(ConfBundle(s2));
+		auto port1 = new OxSerialPort(immutable ConfBundle(s1));
+		auto port2 = new OxSerialPort(immutable ConfBundle(s2));
 
 		port1.open();
 		port2.open();
