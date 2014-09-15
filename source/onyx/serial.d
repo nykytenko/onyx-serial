@@ -158,8 +158,11 @@ class OxSerialPort
 	 */
 	void open()
 	{
-		impl.open(name, timeOut);
-		setup(speed);
+		if (!isOpen())
+		{
+			impl.open(name, timeOut);
+			setup(speed);
+		}
 	}
 
 
@@ -168,7 +171,7 @@ class OxSerialPort
 	 *
 	 * Throws: nothrow
 	 */
-	 nothrow bool isOpen()
+	 bool isOpen() nothrow
 	 {
 	 	return impl.isOpen();
 	 }
@@ -193,7 +196,10 @@ class OxSerialPort
 	 */
 	void close()
 	{
-		impl.close();
+		if (isOpen())
+		{
+			impl.close();
+		}
 	}
 
 
@@ -212,9 +218,9 @@ class OxSerialPort
 	 *
 	 * Throws: SerialPortIOException
 	 */
-	ubyte[] read(int byteCount)
+	ubyte[] read(int byteCount, bool wait = true)
 	{
-		return impl.read(byteCount);
+		return impl.read(byteCount, wait);
 	}
 
 
@@ -313,16 +319,16 @@ private struct PosixImpl
 			throw new SerialPortOpenException(portName, "Invalid speed value: " ~ to!string(speed));
 		}
 
-		import std.stdio;
-		import std.conv;
-		writeln("*****************speed = ", to!string(speed));
+		//import std.stdio;
+		//import std.conv;
+		//writeln("*****************speed = ", to!string(speed));
 
 		auto set = getSettings();
 		speed_t baud = getBaudRateByNum(speed);
 
-		writeln("cfsetispeed(&set, baud) = ", to!string(cfsetispeed(&set, baud)));
-		writeln("*****************Bspeed = ", to!string(baud));
-		writeln(format("get cfgetispeed = %02X", cfgetispeed(&set)));
+		//writeln("cfsetispeed(&set, baud) = ", to!string(cfsetispeed(&set, baud)));
+		//writeln("*****************Bspeed = ", to!string(baud));
+		//writeln(format("get cfgetispeed = %02X", cfgetispeed(&set)));
  		if((cfsetispeed(&set, baud) < 0) || (cfsetospeed(&set, baud) < 0) || (tcsetattr(handle, TCSANOW, &set) == -1))
  		{
  			throw new SerialPortOpenException(portName, "Can't set speed " ~ to!string(speed) ~ " for serial port");
@@ -403,7 +409,7 @@ private struct PosixImpl
 	 *
 	 * Throws: SerialPortIOException
 	 */
- 	ubyte[] read(int byteCount)
+ 	ubyte[] read(uint byteCount, bool wait = true)
  	{
  		ubyte[] data = new ubyte[byteCount];
 
@@ -415,7 +421,7 @@ private struct PosixImpl
 		/* start time in hnsecs */
 		import std.datetime;
  		auto startTime = Clock.currStdTime();
- 		while((byteRemains > 0) && (readTimeOut > (Clock.currStdTime() - startTime)/(1000*10)))
+ 		do
  		{
 	 		pollfd pfd = pollfd(handle, POLLIN, 0);
 
@@ -434,11 +440,13 @@ private struct PosixImpl
  				Thread.sleep( dur!("msecs")(timeOutTick));
  			}
 	 	}
+	 	while((byteRemains > 0) && wait && (readTimeOut > (Clock.currStdTime() - startTime)/(1000*10)));
 	 	//if (byteRemains)
 	 	//	throw new SerialPortTimeOutException(portName, "Port data read timeout, needed: "~to!string(byteCount)~"bytes, received: "~to!string(data.length)~)
 	 	data = data[0..(byteCount-byteRemains)];
  		return data;
  	}
+
 
 
  	bool checkSpeed(int speed)
