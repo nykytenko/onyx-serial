@@ -216,7 +216,7 @@ class OxSerialPort
 	/**
 	 * read data from port
 	 *
-	 * Throws: SerialPortIOException
+	 * Throws: SerialPortIOException, SerialPortTimeOutException
 	 */
 	ubyte[] read(int byteCount, bool wait = true)
 	{
@@ -407,7 +407,7 @@ private struct PosixImpl
  	/**
 	 * read data from port
 	 *
-	 * Throws: SerialPortIOException
+	 * Throws: SerialPortIOException, SerialPortTimeOutException
 	 */
  	ubyte[] read(uint byteCount, bool wait = true)
  	{
@@ -415,7 +415,7 @@ private struct PosixImpl
 
  		size_t byteRemains = byteCount;
 
- 		enum timeOutTickMax = 1; // msecs
+ 		enum timeOutTickMax = 10; // msecs
  		auto timeOutTick = cast(int)((readTimeOut >= timeOutTickMax)?timeOutTickMax:readTimeOut);
 
 		/* start time in hnsecs */
@@ -441,8 +441,8 @@ private struct PosixImpl
  			}
 	 	}
 	 	while((byteRemains > 0) && wait && (readTimeOut > (Clock.currStdTime() - startTime)/(1000*10)));
-	 	//if (byteRemains)
-	 	//	throw new SerialPortTimeOutException(portName, "Port data read timeout, needed: "~to!string(byteCount)~"bytes, received: "~to!string(data.length)~)
+	 	if (byteRemains == byteCount)
+	 		throw new SerialPortTimeOutException(portName, "Port data read timeout. ");
 	 	data = data[0..(byteCount-byteRemains)];
  		return data;
  	}
