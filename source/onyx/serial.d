@@ -22,6 +22,9 @@ import core.thread;
 
 
 
+/**
+ * Base Serial port exception
+ */
 abstract class SerialPortException: std.stdio.StdioException
 {
 	private string _port;
@@ -36,170 +39,172 @@ abstract class SerialPortException: std.stdio.StdioException
 
 
 /**
- * Serial port open exception
+ * Construct exception with parrent: SerialPortException
  */
-class SerialPortOpenException:SerialPortException
+template childSerialPortException(string exceptionName)
 {
+	const char[] childSerialPortException =
 
-	this(string port, string msg)
+	"class " ~exceptionName~":SerialPortException 
 	{
-		super(port, msg);
-	}
+		this(string port, string msg)
+		{
+			super(port, msg);
+		}
+	}";
 }
 
 
 /**
- * Serial port close exception
+ * Realize child Exceptions
  */
-class SerialPortCloseException:SerialPortException
-{
+mixin(childSerialPortException!"SerialPortSetupException");
+mixin(childSerialPortException!"SerialPortOpenException");
+mixin(childSerialPortException!"SerialPortCloseException");
+mixin(childSerialPortException!"SerialPortIOException");
+mixin(childSerialPortException!"SerialPortTimeOutException");
 
-	this(string port, string msg)
-	{
-		super(port, msg);
-	}
-}
+
+
 
 
 /**
- * Serial port IO exception
+ * Serial port.
+ *
+ * Hardware independent level
  */
-class SerialPortIOException:SerialPortException
+struct OxSerialPort
 {
-
-	this(string port, string msg)
-	{
-		super(port, msg);
-	}
-}
-
-
-/**
- * Serial port timeout exception
- */
-class SerialPortTimeOutException:SerialPortException
-{
-
-	this(string port, string msg)
-	{
-		super(port, msg);
-	}
-}
-
-
-
-class OxSerialPort
-{
+	/**
+	 * Low level Serial port imolementation
+	 */
 	private Impl impl;
 
-	private string _name;
-
-	private int speed;
-	private int timeOut;
-
-	string name(){return _name;}
 
 
-	this(string port)
+	/**
+	 * Create new serial port
+	 *
+	 * Throws: SerialPortSetupException
+	 */
+	this(string portName, uint speed = 9600, string parity = "none", uint timeOut = 0)
 	{
-		impl =  Impl();
-		_name = port;
+		impl =  Impl(portName, speed, parity, timeOut);
 	}
 
 
 	/**
 	 * Create new serial port
 	 *
-	 * Throws: ConfException
+	 * Throws: SerialPortSetupException
+	 * Throws: ValueNotFoundException, GlKeyNotFoundException, ConfException
+	 * Throws: ConvException, ConvOverflowException
 	 */
 	this(immutable ConfBundle bundle)
 	{
-		impl =  Impl();
 		string extractName()
 		{
-			auto portName = bundle.value("port", "name");
-			if (!portName.startsWith("/dev/tty"))
-				throw new ConfException("port name value must be start from \"/dev/tty*\" (not \"" ~ portName ~ "\")");
-			return portName;
+			string name;
+			try
+			{
+				name = bundle.value("port", "name");
+			}
+			catch(KeyNotFoundException ke)
+			{
+				throw new ConfException("Not found port name: " ~ke.msg);
+			}
+			return name;
 		}
 
-		int extractSpeed()
+		uint extractSpeed()
 		{
-			int portSpeed = bundle.intValue("port", "speed");
-			if (!impl.checkSpeed(portSpeed))
-				throw new ConfException(" port speed value must be from standard line (not \"" ~ to!string(portSpeed) ~ "\")");
+			uint portSpeed;
+			try
+			{
+				portSpeed = bundle.intValue("port", "speed");
+			}
+			catch(KeyNotFoundException ke)
+			{
+				portSpeed = 9600;
+			}
 			return portSpeed;
 		}
 
-		int extractTimeOut()
+		string extractParity()
 		{
-			int portTimeOut = bundle.intValue("port", "time_out");
-			if (portTimeOut < 0 )
-				throw new ConfException(" port time_out value must be > 0 (not \"" ~ to!string(portTimeOut) ~ "\")");
+			string parity;
+			try
+			{
+				parity = bundle.value("port", "parity");
+			}
+			catch(KeyNotFoundException ke)
+			{
+				parity = "none";
+			}
+			return parity;
+		}
+
+		uint extractTimeOut()
+		{
+			uint portTimeOut;
+			try
+			{
+				portTimeOut = bundle.intValue("port", "time_out");
+			}
+			catch(KeyNotFoundException ke)
+			{
+				portTimeOut = 0;
+			}
 			return portTimeOut;
 		}
 
-		_name = extractName();
-		speed = extractSpeed();
-		timeOut = extractTimeOut(); // in ms
+		this(extractName, extractSpeed, extractParity, extractTimeOut);
 	}
 
 
-	~this() @safe
+	~this()
 	{
-
+		close();
 	}
 
 
 	/**
 	 * Open serial port (and setup)
 	 *
-	 * Throws: SerialPortOpenException
+	 * Return true if port opened
+	 *
+	 * Throws: SerialPortOpenException, SerialPortSetupException
 	 */
-	void open()
+	bool open()
 	{
-		if (!isOpen())
+		scope(failure) close();
+		if (!impl.isOpen())
 		{
-			impl.open(name, timeOut);
-			setup(speed);
+			impl.open();
+			impl.setup();
 		}
+		else
+		{
+			throw new SerialPortOpenException(impl.name, " Port already opened");
+		}
+		return impl.isOpen();
 	}
 
 
 	/**
-	 * Check is open serial port
+	 * Close serial port
 	 *
-	 * Throws: nothrow
-	 */
-	 bool isOpen() nothrow
-	 {
-	 	return impl.isOpen();
-	 }
-
-
-
-	/**
-	 * Setup serial port
-	 *
-	 * Throws: SerialPortOpenException
-	 */
-	private void setup(int speed)
-	{
-		impl.setup(speed);
-	}
-
-
-	/**
-	 * Close serial port 
+	 * Return true if port closed
 	 *
 	 * Throws: SerialPortCloseException
 	 */
-	void close()
+	bool close()
 	{
 		if (isOpen())
 		{
 			impl.close();
 		}
+		return !isOpen();
 	}
 
 
@@ -248,10 +253,88 @@ private struct PosixImpl
 
 	private Handle handle = -1;
 
-	private string portName;
 
-	/* in msecs */
-	private int readTimeOut = 0;
+	/**
+	 * Port name.
+	 * For posix systems as rule: /dev/tty*
+	 */
+	private string _name;
+
+	@property
+	string name() pure nothrow
+	{
+		return _name;
+	}
+
+
+	/**
+	 * Port speed.
+	 * Must be from standard row: 0, 50, 75 .. 4_000_000
+	 */
+	private uint _speed;
+
+	@property
+	int speed() pure nothrow
+	{
+		return _speed;
+	}
+
+
+	/**
+	 * Port parity.
+	 * Must be from: "none, odd, even, mark, space"
+	 */
+	private string _parity;
+
+	@property
+	string parity() pure nothrow
+	{
+		return _parity;
+	}
+
+
+	/**
+	 * Port data read timeout.
+	 * in msecs
+	 */
+	private uint _readTimeOut;
+
+	@property
+	uint readTimeOut() pure nothrow
+	{
+		return _readTimeOut;
+	}
+
+
+	/**
+	 * Create serial port implementation
+	 *
+	 * Throws: SerialPortSetupException
+	 */
+	this(string name, uint speed, string parity, uint timeOut)
+	{
+		_name = name;
+
+		if (checkSpeed(speed))
+		{
+			_speed = speed;
+		}
+		else
+		{
+			throw new SerialPortSetupException(name, "Invalid speed value: " ~ to!string(speed));
+		}
+
+		if (checkParity(parity))
+		{
+			_parity = parity;
+		}
+		else
+		{
+			throw new SerialPortSetupException(name, "Invalid parity value: " ~ parity);
+		}
+
+		_readTimeOut = timeOut;
+	}
 
 
 
@@ -260,18 +343,16 @@ private struct PosixImpl
 	 *
 	 * Throws: SerialPortOpenException
 	 */
-	void open (string portName, int readTimeOut)
+	void open()
  	{
-		Handle h = core.sys.posix.fcntl.open(portName.toStringz, O_RDWR | O_NOCTTY | O_NONBLOCK);
+		Handle h = core.sys.posix.fcntl.open(name.toStringz, O_RDWR | O_NOCTTY | O_NONBLOCK);
 		if (h != -1)
 		{
 			handle = h;
-			this.portName = portName;
-			this.readTimeOut = readTimeOut;
 		}
 		else
 		{
-			throw new SerialPortOpenException(portName, "Can't open serial port");
+			throw new SerialPortOpenException(name, "Can't open serial port");
 		}
  	}
 
@@ -285,7 +366,7 @@ private struct PosixImpl
  	{
 		if (core.sys.posix.unistd.close(handle) == -1)
 		{
-			throw new SerialPortCloseException(portName, "Can't close serial port");
+			throw new SerialPortCloseException(name, "Can't close serial port");
 		}
 
  	}
@@ -294,15 +375,16 @@ private struct PosixImpl
  	/**
 	 * Setup serial port parameters
 	 *
-	 * Throws: SerialPortOpenException
+	 * Throws: SerialPortSetupException
 	 */
- 	void setup(int speed)
+ 	void setup()
  	{
- 		/* set speed */
-		setSpeed(speed);
-
 		/* set flags */
 		setFlags();
+
+		/* set speed */
+		setSpeed();
+		setParity();
 
  	}
 
@@ -310,46 +392,62 @@ private struct PosixImpl
  	/**
  	 * Set port speed
  	 *
- 	 * Throws: SerialPortOpenException
+ 	 * Throws: SerialPortSetupException
  	 */
- 	private void setSpeed (int speed)
+ 	private void setSpeed()
  	{
-		if (!checkSpeed(speed))
-		{
-			throw new SerialPortOpenException(portName, "Invalid speed value: " ~ to!string(speed));
-		}
-
-		//import std.stdio;
-		//import std.conv;
-		//writeln("*****************speed = ", to!string(speed));
-
-		auto set = getSettings();
+		auto set = getTermios();
 		speed_t baud = getBaudRateByNum(speed);
 
-		//writeln("cfsetispeed(&set, baud) = ", to!string(cfsetispeed(&set, baud)));
-		//writeln("*****************Bspeed = ", to!string(baud));
-		//writeln(format("get cfgetispeed = %02X", cfgetispeed(&set)));
  		if((cfsetispeed(&set, baud) < 0) || (cfsetospeed(&set, baud) < 0) || (tcsetattr(handle, TCSANOW, &set) == -1))
  		{
- 			throw new SerialPortOpenException(portName, "Can't set speed " ~ to!string(speed) ~ " for serial port");
+ 			throw new SerialPortSetupException(name, "Can't set speed " ~ to!string(speed) ~ " for serial port");
  		}
 
  	}
 
 
  	/**
+ 	 * Set port speed
+ 	 *
+ 	 * Throws: SerialPortSetupException
+ 	 */
+ 	private void setParity()
+ 	{
+ 		auto set = getTermios();
+ 		/* clear parity bits */
+ 		set.c_cflag &= ~(PARENB | PARODD);
+ 		set.c_iflag &= ~INPCK;
+
+ 		auto par = getParityByName(parity);
+ 		switch(par)
+ 		{
+ 			case Parity.odd:
+ 				set.c_cflag |= (PARENB | PARODD);
+ 				set.c_iflag |= INPCK;
+ 				break;
+ 			case Parity.even:
+ 				set.c_cflag |= PARENB;
+ 				set.c_iflag |= INPCK;
+ 				break;
+ 			case Parity.none:
+ 		}
+ 	}
+
+
+ 	/**
  	 * Set port flags
  	 *
- 	 * Throws: SerialPortOpenException
+ 	 * Throws: SerialPortSetupException
  	 */
  	private void setFlags()
  	{
- 		auto set = getSettings();
+ 		auto set = getTermios();
 		/* set flags */
 		set.c_cflag |= (CREAD | CLOCAL);
 		set.c_cflag &= ~CRTSCTS;
 		set.c_lflag &= ~(ICANON | ECHO | ECHOE | ECHOK | ECHONL | ECHOCTL | ECHOPRT | ECHOKE | ISIG | IEXTEN);
-		set.c_iflag &= ~(IXON | IXOFF | IXANY | INPCK | IGNPAR | PARMRK | ISTRIP | IGNBRK | BRKINT | INLCR | IGNCR| ICRNL);
+		set.c_iflag &= ~(IXON | IXOFF | IXANY | IGNPAR | PARMRK | ISTRIP | IGNBRK | BRKINT | INLCR | IGNCR| ICRNL);
 		set.c_oflag &= ~OPOST;
 
 		/* Minimum number of characters as 0 and we don't want to use any timer */
@@ -358,7 +456,7 @@ private struct PosixImpl
 
 		if (tcsetattr(handle, TCSANOW, &set) == -1)
 		{
-			throw new SerialPortOpenException(portName, "Can't save setup for serial port");	
+			throw new SerialPortSetupException(name, "Can't save setup for serial port");	
 		}
 
  	}
@@ -367,14 +465,14 @@ private struct PosixImpl
 	/**
 	 * get termios structure
 	 *
-	 * Throws: SerialPortOpenException
+	 * Throws: SerialPortSetupException
 	 */
- 	private termios getSettings()
+ 	private termios getTermios()
  	{
  		termios set;
 		if (tcgetattr(handle, &set) < 0)
 		{
-			throw new SerialPortOpenException(portName, "Can't setup serial port");
+			throw new SerialPortSetupException(name, "Can't setup serial port");
 		}
 		return set;
  	}
@@ -384,7 +482,7 @@ private struct PosixImpl
  	/**
 	 * open port check
 	 */
- 	nothrow bool isOpen() //@safe pure nothrow
+ 	bool isOpen() nothrow//@safe pure nothrow
  	{
  		return (handle > 0)?true:false;
  	}
@@ -399,7 +497,7 @@ private struct PosixImpl
  	{
  		if (core.sys.posix.unistd.write(handle, cast(void *)buf.ptr, buf.length) == -1)
  		{
- 			throw new SerialPortIOException(portName, "Error Writing to serial port");
+ 			throw new SerialPortIOException(name, "Error Writing to serial port");
  		}
  	}
 
@@ -431,7 +529,7 @@ private struct PosixImpl
 	 			ssize_t chanck = core.sys.posix.unistd.read(handle, cast(void*)(data.ptr + byteCount - byteRemains), byteRemains);
 	 			if (chanck == -1)
 	 			{
-	 				throw new SerialPortIOException(portName, "Error reading from serial port");
+	 				throw new SerialPortIOException(name, "Error reading from serial port");
 	 			}
 	 			byteRemains -= chanck;
 	 		}
@@ -442,14 +540,51 @@ private struct PosixImpl
 	 	}
 	 	while((byteRemains > 0) && wait && (readTimeOut > (Clock.currStdTime() - startTime)/(1000*10)));
 	 	if (byteRemains == byteCount)
-	 		throw new SerialPortTimeOutException(portName, "Port data read timeout. ");
+	 		throw new SerialPortTimeOutException(name, "Port data read timeout. ");
 	 	data = data[0..(byteCount-byteRemains)];
  		return data;
  	}
 
 
+ 	enum Parity
+ 	{
+ 		none = "none",
+ 		odd = "odd",
+ 		even = "even",
+ 		mark = "mark",
+ 		space = "space",
+ 		error = "error"
+ 	}
 
- 	bool checkSpeed(int speed)
+
+ 		bool checkParity(string parity) nothrow pure
+ 	{
+ 		return (getParityByName(parity) != Parity.error)?true:false;
+ 	}
+
+
+
+ 	Parity getParityByName(string strParity) nothrow pure
+ 	{
+ 		switch(strParity)
+ 		{
+ 			case Parity.none:
+ 				return Parity.none;
+ 			case Parity.odd:
+ 				return Parity.odd;
+ 			case Parity.even:
+ 				return Parity.even;
+ 			case Parity.mark:
+ 				return Parity.mark;
+ 			case Parity.space:
+ 				return Parity.space;
+ 			default:
+ 				return Parity.error;
+ 		}
+ 	}
+
+
+ 	bool checkSpeed(uint speed) nothrow pure
  	{
  		return (getBaudRateByNum(speed) != -1)?true:false;
  	}
@@ -518,7 +653,7 @@ private struct PosixImpl
 
 	
 
-	speed_t getBaudRateByNum(int speedNum)
+	speed_t getBaudRateByNum(uint speedNum) nothrow pure
 	{
 		switch(speedNum)
 		{
@@ -577,7 +712,7 @@ version (vTest)
 			 "speed = 57600",
 			 "data_bits = 8",
 			 "stop_bits = 1",
-			 "parity = PARITY_NONE",
+			 "parity = none",
 			 "set_RTS = no",
 			 "set_DTR = no",
 			 "time_out = 1500"];
@@ -590,7 +725,7 @@ version (vTest)
 			 "speed = 57600",
 			 "data_bits = 8",
 			 "stop_bits = 1",
-			 "parity = PARITY_NONE",
+			 "parity = none",
 			 "set_RTS = no",
 			 "set_DTR = no",
 			 "time_out = 1500"];

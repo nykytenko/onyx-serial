@@ -23,7 +23,7 @@
 	],
 	
 	"dependencies": {
-		"onyx-config": ">=1.1.1"
+		"onyx-config": ">=1.1.4"
 	}
 
 }
