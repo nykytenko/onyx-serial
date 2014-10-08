@@ -200,11 +200,11 @@ struct OxSerialPort
 	 */
 	bool close()
 	{
-		if (isOpen())
+		if (impl.isOpen())
 		{
 			impl.close();
 		}
-		return !isOpen();
+		return !impl.isOpen();
 	}
 
 
@@ -420,7 +420,7 @@ private struct PosixImpl
  		set.c_iflag &= ~INPCK;
 
  		auto par = getParityByName(parity);
- 		switch(par)
+ 		final switch(par)
  		{
  			case Parity.odd:
  				set.c_cflag |= (PARENB | PARODD);
@@ -431,6 +431,8 @@ private struct PosixImpl
  				set.c_iflag |= INPCK;
  				break;
  			case Parity.none:
+ 				break;
+ 			case Parity.error:
  		}
  	}
 
@@ -551,8 +553,8 @@ private struct PosixImpl
  		none = "none",
  		odd = "odd",
  		even = "even",
- 		mark = "mark",
- 		space = "space",
+ 		//mark = "mark",
+ 		//space = "space",
  		error = "error"
  	}
 
@@ -574,10 +576,10 @@ private struct PosixImpl
  				return Parity.odd;
  			case Parity.even:
  				return Parity.even;
- 			case Parity.mark:
- 				return Parity.mark;
- 			case Parity.space:
- 				return Parity.space;
+ 			//case Parity.mark:
+ 			//	return Parity.mark;
+ 			//case Parity.space:
+ 			//	return Parity.space;
  			default:
  				return Parity.error;
  		}
