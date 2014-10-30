@@ -368,7 +368,7 @@ private struct PosixImpl
 		{
 			throw new SerialPortCloseException(name, "Can't close serial port");
 		}
-
+		handle = -1;
  	}
 
 
@@ -434,6 +434,10 @@ private struct PosixImpl
  				break;
  			case Parity.error:
  		}
+ 		if (tcsetattr(handle, TCSANOW, &set) == -1)
+		{
+			throw new SerialPortSetupException(name, "Can't set parity " ~ par ~ " for serial port");	
+		}
  	}
 
 
