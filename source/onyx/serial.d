@@ -65,7 +65,15 @@ mixin(childSerialPortException!"SerialPortIOException");
 mixin(childSerialPortException!"SerialPortTimeOutException");
 
 
-
+template getterImplMember(string type, string name)
+{
+	const char[] getterImplMember = 
+	
+	type ~ " " ~ name ~ "()
+	{
+		return impl." ~ name ~ ";
+	}";
+}
 
 
 /**
@@ -79,8 +87,9 @@ struct OxSerialPort
 	 * Low level Serial port imolementation
 	 */
 	private Impl impl;
-
-
+	
+	
+	mixin(getterImplMember!("string", "name"));
 
 	/**
 	 * Create new serial port
@@ -229,6 +238,19 @@ struct OxSerialPort
 	}
 
 
+	/**
+	 * Check if port open
+	 *
+	 * Return true if port open
+	 *
+	 */
+	bool isOpen() nothrow
+	{
+		return impl.isOpen();
+	}
+	
+	
+	
 	
 
 }
