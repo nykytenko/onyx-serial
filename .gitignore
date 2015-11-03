@@ -1,4 +1,4 @@
 *~
 .dub
 bin
-
+dub.selection.json

@@ -14,7 +14,7 @@
  
 module onyx.serial;
 
-import onyx.config.bundle;
+import onyx.bundle;
 
 import std.string;
 import std.conv;
@@ -84,7 +84,7 @@ template getterImplMember(string type, string name)
 struct OxSerialPort
 {
 	/**
-	 * Low level Serial port imolementation
+	 * Low level Serial port implementation
 	 */
 	private Impl impl;
 	
@@ -106,10 +106,10 @@ struct OxSerialPort
 	 * Create new serial port
 	 *
 	 * Throws: SerialPortSetupException
-	 * Throws: ValueNotFoundException, GlKeyNotFoundException, ConfException
+	 * Throws: ValueNotFoundException, GlKeyNotFoundException, BundleException
 	 * Throws: ConvException, ConvOverflowException
 	 */
-	this(immutable ConfBundle bundle)
+	this(immutable Bundle bundle)
 	{
 		string extractName()
 		{
@@ -120,7 +120,7 @@ struct OxSerialPort
 			}
 			catch(KeyNotFoundException ke)
 			{
-				throw new ConfException("Not found port name: " ~ke.msg);
+				throw new BundleException("Not found port name: " ~ke.msg);
 			}
 			return name;
 		}
@@ -130,7 +130,7 @@ struct OxSerialPort
 			uint portSpeed;
 			try
 			{
-				portSpeed = bundle.intValue("port", "speed");
+				portSpeed = bundle.value!int("port", "speed");
 			}
 			catch(KeyNotFoundException ke)
 			{
@@ -158,7 +158,7 @@ struct OxSerialPort
 			uint portTimeOut;
 			try
 			{
-				portTimeOut = bundle.intValue("port", "time_out");
+				portTimeOut = bundle.value!int("port", "time_out");
 			}
 			catch(KeyNotFoundException ke)
 			{
@@ -759,8 +759,8 @@ version (vTest)
 			 "time_out = 1500"];
 
 
-		auto port1 = new OxSerialPort(immutable ConfBundle(s1));
-		auto port2 = new OxSerialPort(immutable ConfBundle(s2));
+		auto port1 = new OxSerialPort(new immutable Bundle(s1));
+		auto port2 = new OxSerialPort(new immutable Bundle(s2));
 
 		port1.open();
 		port2.open();
