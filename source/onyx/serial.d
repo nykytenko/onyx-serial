@@ -1,10 +1,11 @@
 /**
  * Serial port library
  *
- * Copyright: © 2014 onyx
+ * Copyright: © 2014-2015
+ *
  * License: MIT license. License terms written in licence.txt file
  *
- * Authors: Oleg Nykytenko (onyx), onyx.itdevelopment@gmail.com
+ * Authors: Oleg Nykytenko, onyx.itdevelopment@gmail.com
  *
  * Version: 0.xx
  *
@@ -14,18 +15,21 @@
  
 module onyx.serial;
 
+
 import onyx.bundle;
 
 import std.string;
 import std.conv;
 import core.thread;
 
+import std.stdio:StdioException;
+
 
 
 /**
  * Base Serial port exception
  */
-abstract class SerialPortException: std.stdio.StdioException
+abstract class SerialPortException: StdioException
 {
 	private string _port;
 
