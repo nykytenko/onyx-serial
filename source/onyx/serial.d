@@ -134,7 +134,7 @@ struct OxSerialPort
 			uint portSpeed;
 			try
 			{
-				portSpeed = bundle.value!int("port", "speed");
+				portSpeed = bundle.value!uint("port", "speed");
 			}
 			catch(KeyNotFoundException ke)
 			{
@@ -162,7 +162,7 @@ struct OxSerialPort
 			uint portTimeOut;
 			try
 			{
-				portTimeOut = bundle.value!int("port", "time_out");
+				portTimeOut = bundle.value!uint("port", "time_out");
 			}
 			catch(KeyNotFoundException ke)
 			{
@@ -286,7 +286,6 @@ private struct PosixImpl
 	 */
 	private string _name;
 
-	@property
 	string name() pure nothrow
 	{
 		return _name;
@@ -299,7 +298,6 @@ private struct PosixImpl
 	 */
 	private uint _speed;
 
-	@property
 	int speed() pure nothrow
 	{
 		return _speed;
@@ -312,7 +310,6 @@ private struct PosixImpl
 	 */
 	private string _parity;
 
-	@property
 	string parity() pure nothrow
 	{
 		return _parity;
@@ -411,7 +408,6 @@ private struct PosixImpl
 		/* set speed */
 		setSpeed();
 		setParity();
-
  	}
 
 
@@ -738,9 +734,7 @@ version (vTest)
 
 		string[] s1 = 
 			["[port]",
-			 "type = uart",
 			 "name = /dev/ttyr06",
-			 "time_out_restore = 3000",
 			 "speed = 57600",
 			 "data_bits = 8",
 			 "stop_bits = 1",
@@ -751,9 +745,7 @@ version (vTest)
 
 		string[] s2 = 
 			["[port]",
-			 "type = uart",
 			 "name = /dev/ttyr07",
-			 "time_out_restore = 3000",
 			 "speed = 57600",
 			 "data_bits = 8",
 			 "stop_bits = 1",
@@ -763,16 +755,19 @@ version (vTest)
 			 "time_out = 1500"];
 
 
-		auto port1 = new OxSerialPort(new immutable Bundle(s1));
-		auto port2 = new OxSerialPort(new immutable Bundle(s2));
+		auto port1 = new OxSerialPort(immutable Bundle(s1));
+		auto port2 = new OxSerialPort(immutable Bundle(s2));
 
 		port1.open();
 		port2.open();
 
-		port1.write(cast(ubyte[])[0x22, 0x33, 0xCC]);
+		ubyte data = cast(ubyte[])[0x22, 0x33, 0xCC];
+
+		port1.write(data);
 
 		ubyte[] buf = port2.read(3);
-		assert (buf == cast(ubyte[])[0x22, 0x33, 0xCC]);
+
+		assert (buf == data);
 
 		port1.close();
 		port2.close();
