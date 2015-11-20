@@ -761,7 +761,7 @@ version (vOnyxSerialTest)
 		port1.open();
 		port2.open();
 
-		ubyte[] data = cast(ubyte[])[0x22, 0x33, 0xCC];
+		ubyte[] data = [0x22, 0x33, 0xCC];
 
 		port1.write(data);
 
