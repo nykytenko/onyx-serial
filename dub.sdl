@@ -10,7 +10,7 @@ configuration "test" {
 	targetType "executable"
 	sourcePaths "test/" "source/"
 	mainSourceFile "test/main.d"
-	versions "vTest"
+	versions "vOnyxSerialTest"
 }
 
 configuration "library" {

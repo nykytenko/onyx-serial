@@ -724,7 +724,7 @@ private struct PosixImpl
 
 
 
-version (vTest)
+version (vOnyxSerialTest)
 {
 	import std.stdio;
 	import std.conv;
@@ -755,13 +755,13 @@ version (vTest)
 			 "time_out = 1500"];
 
 
-		auto port1 = new OxSerialPort(immutable Bundle(s1));
-		auto port2 = new OxSerialPort(immutable Bundle(s2));
+		auto port1 = new OxSerialPort(new immutable Bundle(s1));
+		auto port2 = new OxSerialPort(new immutable Bundle(s2));
 
 		port1.open();
 		port2.open();
 
-		ubyte data = cast(ubyte[])[0x22, 0x33, 0xCC];
+		ubyte[] data = cast(ubyte[])[0x22, 0x33, 0xCC];
 
 		port1.write(data);
 
