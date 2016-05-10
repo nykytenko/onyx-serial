@@ -19,8 +19,8 @@ onyx-serial: the simple serial port library by D.
 	import onyx.serial;
 
 	/* Create ports */
-	auto port1 = OxSerialPort("/dev/ttyS1", 9600, "none", 10);
-	auto port2 = OxSerialPort("/dev/ttyS2", 9600, "none", 10);
+	auto port1 = OxSerialPort("dev/ttyS1", Speed.B9600, Parity.none, 1000);
+	auto port2 = OxSerialPort("dev/ttyS2", Speed.B9600, Parity.none, 1000);
 
 
 	port1.open;
