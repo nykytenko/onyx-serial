@@ -1,4 +1,4 @@
-name "onyx-serial-dccdn"
+name "onyx-serial"
 description "Serial port interface by D"
 license "MIT"
 copyright "Copyright © 2014-2015"
