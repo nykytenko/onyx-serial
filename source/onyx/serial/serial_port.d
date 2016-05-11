@@ -251,7 +251,7 @@ struct OxSerialPort
 	 *
 	 * Throws: SerialPortIOException, SerialPortTimeOutException
 	 */
-	ubyte[] read(int byteCount, ReadMode readMode = ReadMode.wait_for_timeout)
+	ubyte[] read(int byteCount, ReadMode readMode = ReadMode.waitForTimeout)
 	{
 		return impl.read(byteCount, readMode);
 	}
@@ -264,7 +264,7 @@ struct OxSerialPort
 	deprecated("Please use read(int, ReadMode) instead")
 	ubyte[] read(int byteCount, bool wait)
 	{
-		return impl.read(byteCount, wait ? ReadMode.wait_for_timeout : ReadMode.no_wait);
+		return impl.read(byteCount, wait ? ReadMode.waitForTimeout : ReadMode.noWait);
 	}
 
 
@@ -666,9 +666,9 @@ private struct PosixImpl
  				break;
  			}
 	 	}
-	 	while(	readMode == ReadMode.wait_for_timeout && (readTimeOut > (Clock.currStdTime() - startTime)/(1000*10)) ||
-	 			readMode == ReadMode.wait_for_full_buffer ||
-	 			readMode == ReadMode.wait_for_data && byteRemains == byteCount);
+	 	while(	readMode == ReadMode.waitForTimeout && (readTimeOut > (Clock.currStdTime() - startTime)/(1000*10)) ||
+	 			readMode == ReadMode.waitForAllData ||
+	 			readMode == ReadMode.waitForData && byteRemains == byteCount);
 	 	
 	 	if (byteRemains == byteCount)
 	 		throw new SerialPortTimeOutException(name, "Port data read timeout. ");
