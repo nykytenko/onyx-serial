@@ -13,11 +13,10 @@
  *
  */
  
-module onyx.serial.serial_port;
+module onyx.serial;
 
 
 import onyx.bundle;
-import onyx.serial.read_mode;
 
 import std.string;
 import std.conv;
@@ -337,7 +336,16 @@ enum Speed:uint
 	B4000000 = 4000000,
 }
 
-
+/**
+	Variants for the read method
+*/
+enum ReadMode
+{
+	noWait,
+	waitForTimeout,
+	waitForData,
+	waitForAllData
+}
 
 version(Posix)
 {
