@@ -41,7 +41,7 @@ onyx-serial: the simple serial port library by D.
 
 
 ```D
-	string[] s1 = 
+	string[] s1 =
 		["[port]",
 		 "name = /dev/ttyr06",
 		 "speed = 57600",

@@ -243,15 +243,27 @@ struct OxSerialPort
 	{
 		impl.write(buf);
 	}
+	
+	
+	/**
+	 * read data from port
+	 *
+	 * Throws: SerialPortIOException, SerialPortTimeOutException
+	 */
+	ubyte[] read(int byteCount, ReadMode readMode = ReadMode.waitForTimeout)
+	{
+		return impl.read(byteCount, readMode);
+	}
 
 	/**
 	 * read data from port
 	 *
 	 * Throws: SerialPortIOException, SerialPortTimeOutException
 	 */
-	ubyte[] read(int byteCount, bool wait = true)
+	deprecated("Please use read(int, ReadMode) instead")
+	ubyte[] read(int byteCount, bool wait)
 	{
-		return impl.read(byteCount, wait);
+		return impl.read(byteCount, wait ? ReadMode.waitForTimeout : ReadMode.noWait);
 	}
 
 
@@ -265,11 +277,6 @@ struct OxSerialPort
 	{
 		return impl.isOpen();
 	}
-	
-	
-	
-	
-
 }
 
 
@@ -329,7 +336,16 @@ enum Speed:uint
 	B4000000 = 4000000,
 }
 
-
+/**
+	Variants for the read method
+*/
+enum ReadMode
+{
+	noWait,
+	waitForTimeout,
+	waitForData,
+	waitForAllData
+}
 
 version(Posix)
 {
@@ -623,7 +639,7 @@ private struct PosixImpl
 	 *
 	 * Throws: SerialPortIOException, SerialPortTimeOutException
 	 */
- 	ubyte[] read(uint byteCount, bool wait = true)
+ 	ubyte[] read(uint byteCount, ReadMode readMode)
  	{
  		ubyte[] data = new ubyte[byteCount];
 
@@ -653,8 +669,15 @@ private struct PosixImpl
  			{
  				Thread.sleep( dur!("msecs")(timeOutTick));
  			}
+ 			else
+ 			{
+ 				break;
+ 			}
 	 	}
-	 	while((byteRemains > 0) && wait && (readTimeOut > (Clock.currStdTime() - startTime)/(1000*10)));
+	 	while(	readMode == ReadMode.waitForTimeout && (readTimeOut > (Clock.currStdTime() - startTime)/(1000*10)) ||
+	 			readMode == ReadMode.waitForAllData ||
+	 			readMode == ReadMode.waitForData && byteRemains == byteCount);
+	 	
 	 	if (byteRemains == byteCount)
 	 		throw new SerialPortTimeOutException(name, "Port data read timeout. ");
 	 	data = data[0..(byteCount-byteRemains)];
