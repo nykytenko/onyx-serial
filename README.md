@@ -16,7 +16,7 @@ onyx-serial: the simple serial port library by D.
 ## Examples:
 
 ```D
-	import onyx.serial.serial_port;
+	import onyx.serial;
 
 	/* Create ports */
 	auto port1 = OxSerialPort("dev/ttyS1", Speed.B9600, Parity.none, 1000);
