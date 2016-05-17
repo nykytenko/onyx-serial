@@ -80,6 +80,14 @@ template getterImplMember(string type, string name)
 }
 
 
+
+
+
+
+
+mixin (genSpeed);
+
+
 /**
  * Serial port.
  *
@@ -101,7 +109,7 @@ struct OxSerialPort
 	 */
 	pure
 	nothrow
-	this(string portName, Speed speed = Speed.B9600, Parity parity = Parity.none, uint timeOut = 0)
+	this(string portName, Speed speed = Speed.S9600, Parity parity = Parity.none, uint timeOut = 0)
 	{
 		impl =  Impl(portName, speed, parity, timeOut);
 	}
@@ -296,49 +304,57 @@ enum Parity:string
 }
 
 
+
+/**
+ * Generation Speed type
+ *
+ * Use example: Speed.s57600
+ */
+const (char[]) genSpeed()
+{
+    const (char)[] res = "enum Speed:uint {";
+    foreach (speed; speedsRange)
+    {
+        res = res ~ 'S' ~ speed ~ " = " ~ speed ~ ", ";
+    }
+    res ~= '}';
+    return res;
+}
+
 /**
  * Speed variants
  *
  */
-enum Speed:uint
+version (linux)
+{
+	const char[][] speedsRange = ["0", "50", "75", "110", "134", "150", "200", "300", "600", "1200", "1800", "2400",
+		"4800", "9600", "19200", "38400", "57600", "115200", "230400", "460800", "500000", "576000", "921600",
+		"1000000", "1152000", "1500000", "2000000", "2500000", "3000000", "3500000", "4000000"];
+}
+else version (OSX)
+{
+	const char[][] speedsRange = ["0", "50", "75", "110", "134", "150", "200", "300", "600", "1200", "1800", "2400",
+		"4800", "9600", "19200", "38400", "7200", "14400", "28800", "57600", "76800", "115200", "230400"];
+}
+else version (FreeBSD)
 {
 
-	B0 = 0,
-	B50 = 50,
-	B75 = 75,
-	B110 = 110,
-	B134 = 134,
-	B150 = 150,
-	B200 = 200,
-	B300 = 300,
-	B600 = 600,
-	B1200 = 1200,
-	B1800 = 1800,
-	B2400 = 2400,
-	B4800 = 4800,
-	B9600 = 9600,
-	B19200 = 19200,
-	B38400 = 38400,
-	B57600 = 57600,
-	B115200 = 115200,
-	B230400 = 230400,
-	B460800 = 460800,
-	B500000 = 500000,
-	B576000 = 576000,
-	B921600 = 921600,
-	B1000000 = 1000000,
-	B1152000 = 1152000,
-	B1500000 = 1500000,
-	B2000000 = 2000000,
-	B2500000 = 2500000,
-	B3000000 = 3000000,
-	B3500000 = 3500000,
-	B4000000 = 4000000,
+	const char[][] speedsRange = ["0", "50", "75", "110", "134", "150", "200", "300", "600", "1200", "1800", "2400",
+		"4800", "9600", "19200", "38400", "7200", "14400", "28800", "57600", "76800", "115200", "230400", "460800", "921600"];
+}
+else version (Solaris)
+{
+
+	const char[][] speedsRange = ["0", "50", "75", "110", "134", "150", "200", "300", "600", "1200", "1800", "2400",
+		"4800", "9600", "19200", "38400", "7200", "14400", "28800", "57600", "76800", "115200", 
+		"153600", "230400", "307200", "460800", "921600"];
 }
 
+
+
 /**
-	Variants for the read method
-*/
+ *	Variants for the read method
+ */
 enum ReadMode
 {
 	noWait,
@@ -346,6 +362,7 @@ enum ReadMode
 	waitForData,
 	waitForAllData
 }
+
 
 version(Posix)
 {
@@ -721,87 +738,44 @@ private struct PosixImpl
 
 
 
+	static const (char[]) genGetSpeedByNumBody()
+	{
+	    const (char)[] res = "switch(speedNum) {";
+	    foreach (speed; speedsRange)
+	    {
+	        res = res ~ "case " ~ speed ~ ": return Speed.S" ~ speed ~ "; \n";
+	    }
+	    res ~= "default: return Speed.S0;";
+	    res ~= '}';
+	    return res;
+	}
+
+
 	/**
 	 * Convert speed number to Speed
 	 */
 	Speed getSpeedByNum(uint speedNum) nothrow pure
 	{
-		switch(speedNum)
-		{
-			case 0:	 		return Speed.B0;
-			case 50: 		return Speed.B50;
-			case 75: 		return Speed.B75;
-			case 110:		return Speed.B110;
-			case 134:		return Speed.B134;
-			case 150:		return Speed.B150;
-			case 200: 		return Speed.B200;
-			case 300: 		return Speed.B300;
-			case 600: 		return Speed.B600;
-			case 1200:		return Speed.B1200;
-			case 1800:		return Speed.B1800;
-			case 2400:		return Speed.B2400;
-			case 4800:		return Speed.B4800;
-			case 9600: 		return Speed.B9600;
-			case 19200: 	return Speed.B19200;
-			case 38400:		return Speed.B38400;
-			case 57600:		return Speed.B57600;
-			case 115200:	return Speed.B115200;
-			case 230400: 	return Speed.B230400;
-			case 460800: 	return Speed.B460800;
-			case 500000: 	return Speed.B500000;
-			case 576000:	return Speed.B576000;
-			case 921600:	return Speed.B921600;
-			case 1000000:	return Speed.B1000000;
-			case 1152000:	return Speed.B1152000;
-			case 1500000:	return Speed.B1500000;
-			case 2000000: 	return Speed.B2000000;
-			case 2500000: 	return Speed.B2500000;
-			case 3000000: 	return Speed.B3000000;
-			case 3500000:	return Speed.B3500000;
-			case 4000000:	return Speed.B4000000;
-			default:		return Speed.B0;
-		}
+		mixin (genGetSpeedByNumBody);
 	}
 
+
+	static const (char[]) genGetBaudRateByNumBody()
+	{
+	    const (char)[] res = "switch(speedNum) {";
+	    foreach (speed; speedsRange)
+	    {
+	        res = res ~ "case " ~ speed ~ ": return B" ~ speed ~ "; \n";
+	    }
+	    res ~= "default: return -1;";
+	    res ~= '}';
+	    return res;
+	}
 
 
 	speed_t getBaudRateByNum(uint speedNum) nothrow pure
 	{
-		switch(speedNum)
-		{
-			case 0:	 		return B0;
-			case 50: 		return B50;
-			case 75: 		return B75;
-			case 110:		return B110;
-			case 134:		return B134;
-			case 150:		return B150;
-			case 200: 		return B200;
-			case 300: 		return B300;
-			case 600: 		return B600;
-			case 1200:		return B1200;
-			case 1800:		return B1800;
-			case 2400:		return B2400;
-			case 4800:		return B4800;
-			case 9600: 		return B9600;
-			case 19200: 	return B19200;
-			case 38400:		return B38400;
-			case 57600:		return B57600;
-			case 115200:	return B115200;
-			case 230400: 	return B230400;
-			case 460800: 	return B460800;
-			case 500000: 	return B500000;
-			case 576000:	return B576000;
-			case 921600:	return B921600;
-			case 1000000:	return B1000000;
-			case 1152000:	return B1152000;
-			case 1500000:	return B1500000;
-			case 2000000: 	return B2000000;
-			case 2500000: 	return B2500000;
-			case 3000000: 	return B3000000;
-			case 3500000:	return B3500000;
-			case 4000000:	return B4000000;
-			default:		return -1;
-		}
+		mixin (genGetBaudRateByNumBody);
 	}
 
 
@@ -831,21 +805,13 @@ private struct PosixImpl
 	}
 	else version (OSX)
 	{
+		enum B7200  	= 7200;
+		enum B14400  	= 14400;
+		enum B28800  	= 28800;
 		enum B57600  	= 57600;
+		enum B76800  	= 76800;
 		enum B115200 	= 115200;
 		enum B230400 	= 230400;
-		enum B460800 	= 460800;
-		enum B500000 	= 500000;
-		enum B576000 	= 576000;
-		enum B921600 	= 921600;
-		enum B1000000	= 1000000;
-		enum B1152000 	= 1152000;
-		enum B1500000 	= 1500000;
-		enum B2000000 	= 2000000;
-		enum B2500000 	= 2500000;
-		enum B3000000 	= 3000000;
-		enum B3500000 	= 3500000;
-		enum B4000000 	= 4000000;
 
 		enum CCTS_OFLOW	= 0x00010000; /* CTS flow control of output */
 		enum CRTS_IFLOW	= 0x00020000; /* RTS flow control of input */
@@ -857,21 +823,16 @@ private struct PosixImpl
 	}
 	else version (FreeBSD)
 	{
+		enum B7200  	= 7200;
+		enum B14400  	= 14400;
+		enum B28800  	= 28800;
 		enum B57600  	= 57600;
+		enum B76800  	= 76800;
 		enum B115200 	= 115200;
 		enum B230400 	= 230400;
 		enum B460800 	= 460800;
-		enum B500000 	= 500000;
-		enum B576000 	= 576000;
 		enum B921600 	= 921600;
-		enum B1000000	= 1000000;
-		enum B1152000 	= 1152000;
-		enum B1500000 	= 1500000;
-		enum B2000000 	= 2000000;
-		enum B2500000 	= 2500000;
-		enum B3000000 	= 3000000;
-		enum B3500000 	= 3500000;
-		enum B4000000 	= 4000000;
+
 
 		enum CCTS_OFLOW	= 0x00010000; /* CTS flow control of output */
 		enum CRTS_IFLOW	= 0x00020000; /* RTS flow control of input */
@@ -881,6 +842,14 @@ private struct PosixImpl
 		enum ECHOPRT	= 0x00000020; /* visual erase mode for hardcopy */
 		enum ECHOCTL 	= 0x00000040; /* echo control chars as ^(Char) */
 	}
+    else version (Solaris)
+    {
+        //enum CRTSCTS 	= 0x10000000;
+
+        //enum ECHOCTL 	= 0x200;
+        //enum ECHOPRT 	= 0x400;
+        //enum ECHOKE 	= 0x800;
+    }
 
 }
 
@@ -894,52 +863,59 @@ version (vOnyxSerialTest)
 
 	unittest
 	{
+        {
+    	    string[] s1 = 
+    		    ["[port]",
+    		     "name = /dev/ttyS0",
+    		     "speed = 57600",
+    		     "data_bits = 8",
+    		     "stop_bits = 1",
+    		     "parity = none",
+    		     "set_RTS = no",
+    		     "set_DTR = no",
+    		     "time_out = 1500"];
 
-		string[] s1 = 
-			["[port]",
-			 "name = /dev/ttyS0",
-			 "speed = 57600",
-			 "data_bits = 8",
-			 "stop_bits = 1",
-			 "parity = none",
-			 "set_RTS = no",
-			 "set_DTR = no",
-			 "time_out = 1500"];
-
-		string[] s2 = 
-			["[port]",
-			 "name = /dev/ttyr07",
-			 "speed = 57600",
-			 "data_bits = 8",
-			 "stop_bits = 1",
-			 "parity = none",
-			 "set_RTS = no",
-			 "set_DTR = no",
-			 "time_out = 1500"];
-
-
-		auto port1 = new OxSerialPort(new immutable Bundle(s1));
-		//auto port2 = new OxSerialPort(new immutable Bundle(s2));
-
-		port1.open();
-		//port2.open();
-
-		ubyte[] data = [0x22, 0x33, 0xCC];
-
-		port1.write(data);
-
-		//ubyte[] buf = port2.read(3);
-
-		//assert (buf == data);
-
-		port1.close();
-		//port2.close();
+    	    string[] s2 = 
+    		    ["[port]",
+    		     "name = /dev/ttyr07",
+    		     "speed = 57600",
+    		     "data_bits = 8",
+    		     "stop_bits = 1",
+    		     "parity = none",
+    		     "set_RTS = no",
+    		     "set_DTR = no",
+    		     "time_out = 1500"];
 
 
-		port1 = new OxSerialPort("dev/ttyS0", Speed.B9600, Parity.none, 1000);
+    	    auto port1 = new OxSerialPort(new immutable Bundle(s1));
+    	    //auto port2 = new OxSerialPort(new immutable Bundle(s2));
 
-		port1.open;
-		port1.write(data);
-		port1.close;
+    	    port1.open();
+    	    //port2.open();
+
+    	    ubyte[] data = [0x22, 0x33, 0xCC];
+
+    	    port1.write(data);
+
+    	    //ubyte[] buf = port2.read(3);
+
+    	    //assert (buf == data);
+
+    	    port1.close();
+    	    //port2.close();
+        }
+
+        {
+
+			//import std.stdio;
+			//writeln(sp);
+
+            auto port1 = new OxSerialPort("/dev/ttyS0", Speed.S9600, Parity.none, 1000);
+
+            port1.open;
+            ubyte[] data = [0x22, 0x33, 0xCC];
+            port1.write(data);
+            port1.close;
+        }
 	}
 }
