@@ -507,6 +507,7 @@ private struct PosixImpl
 	 */
  	void close()
  	{
+ 		static import core.sys.posix.unistd;
 		if (core.sys.posix.unistd.close(handle) == -1)
 		{
 			throw new SerialPortCloseException(name, "Can't close serial port");
@@ -643,6 +644,7 @@ private struct PosixImpl
 	 */
  	void write(ubyte[] buf)
  	{
+ 		static import core.sys.posix.unistd;
  		if (core.sys.posix.unistd.write(handle, cast(void *)buf.ptr, buf.length) == -1)
  		{
  			throw new SerialPortIOException(name, "Error Writing to serial port");
@@ -674,6 +676,7 @@ private struct PosixImpl
 	 		int rc = poll(&pfd, 1, timeOutTick);
 	 		if ((rc > 0) && (pfd.revents & POLLIN))
 	 		{
+	 			static import core.sys.posix.unistd;
 	 			ssize_t chanck = core.sys.posix.unistd.read(handle, cast(void*)(data.ptr + byteCount - byteRemains), byteRemains);
 	 			if (chanck == -1)
 	 			{
