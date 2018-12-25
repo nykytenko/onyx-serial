@@ -10,7 +10,7 @@ onyx-serial: the simple serial port library by D.
  - parity - none, odd, even.
  - Setup read timeout in mS.
  - Check is port open.
- - Work on posix OS (Linux, OSX, FreeBSD).
+ - Working on posix OS (Linux, OSX, FreeBSD, Solaris).
 
 
 ## Examples:
