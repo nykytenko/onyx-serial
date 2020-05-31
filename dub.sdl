@@ -1,7 +1,7 @@
 name "onyx-serial"
-description "Serial port interface by D"
+description "The D Serial port library"
 license "MIT"
-copyright "Copyright © 2014-2015"
+copyright "Copyright © 2014-2020"
 authors "Oleg Nykytenko"
 
 targetPath "./bin"
@@ -19,5 +19,4 @@ configuration "library" {
 }
 
 
-dependency "onyx-config" version=">=2.0.5"
-
+dependency "onyx-config" version=">=2.0.12"

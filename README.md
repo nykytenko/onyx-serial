@@ -1,6 +1,6 @@
 # onyx-serial
 
-onyx-serial: the simple serial port library by D.
+onyx-serial: the D simple serial port library.
 
 
 ## Key features:

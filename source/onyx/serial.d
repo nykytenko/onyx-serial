@@ -1,18 +1,14 @@
 /**
  * Serial port library
  *
- * Copyright: © 2014-2015
- *
+ * Copyright: © 2014-2020
  * License: MIT license. License terms written in licence.txt file
  *
  * Authors: Oleg Nykytenko, onyx.itdevelopment@gmail.com
  *
- * Version: 0.xx
- *
- * Date: 25.03.2014
- *
+ * Version: 0.xx Date: 2014
  */
- 
+
 module onyx.serial;
 
 
@@ -49,7 +45,7 @@ template childSerialPortException(string exceptionName)
 {
 	const char[] childSerialPortException =
 
-	"class " ~exceptionName~":SerialPortException 
+	"class " ~exceptionName~":SerialPortException
 	{
 		this(string port, string msg)
 		{
@@ -71,8 +67,8 @@ mixin(childSerialPortException!"SerialPortTimeOutException");
 
 template getterImplMember(string type, string name)
 {
-	const char[] getterImplMember = 
-	
+	const char[] getterImplMember =
+
 	type ~ " " ~ name ~ "()
 	{
 		return impl." ~ name ~ ";
@@ -99,8 +95,8 @@ struct OxSerialPort
 	 * Low level Serial port implementation
 	 */
 	private Impl impl;
-	
-	
+
+
 	mixin(getterImplMember!("string", "name"));
 
 
@@ -251,8 +247,8 @@ struct OxSerialPort
 	{
 		impl.write(buf);
 	}
-	
-	
+
+
 	/**
 	 * read data from port
 	 *
@@ -482,7 +478,7 @@ private struct PosixImpl
 
 
 	/**
-	 * Open serial port 
+	 * Open serial port
 	 *
 	 * Throws: SerialPortOpenException
 	 */
@@ -501,7 +497,7 @@ private struct PosixImpl
 
 
  	/**
-	 * Close serial port 
+	 * Close serial port
 	 *
 	 * Throws: SerialPortCloseException
 	 */
@@ -579,7 +575,7 @@ private struct PosixImpl
  		}
  		if (tcsetattr(handle, TCSANOW, &set) == -1)
 		{
-			throw new SerialPortSetupException(name, "Can't set parity " ~ par ~ " for serial port");	
+			throw new SerialPortSetupException(name, "Can't set parity " ~ par ~ " for serial port");
 		}
  	}
 
@@ -605,7 +601,7 @@ private struct PosixImpl
 
 		if (tcsetattr(handle, TCSANOW, &set) == -1)
 		{
-			throw new SerialPortSetupException(name, "Can't save setup for serial port");	
+			throw new SerialPortSetupException(name, "Can't save setup for serial port");
 		}
 
  	}
@@ -696,7 +692,7 @@ private struct PosixImpl
 	 	while(	readMode == ReadMode.waitForTimeout && (readTimeOut > (Clock.currStdTime() - startTime)/(1000*10)) ||
 	 			readMode == ReadMode.waitForAllData ||
 	 			readMode == ReadMode.waitForData && byteRemains == byteCount);
-	 	
+
 	 	if (byteRemains == byteCount)
 	 		throw new SerialPortTimeOutException(name, "Port data read timeout. ");
 	 	data = data[0..(byteCount-byteRemains)];
@@ -866,7 +862,7 @@ version (vOnyxSerialTest)
 	unittest
 	{
         {
-    	    string[] s1 = 
+    	    string[] s1 =
     		    ["[port]",
     		     "name = /dev/ttyS0",
     		     "speed = 57600",
@@ -877,7 +873,7 @@ version (vOnyxSerialTest)
     		     "set_DTR = no",
     		     "time_out = 1500"];
 
-    	    string[] s2 = 
+    	    string[] s2 =
     		    ["[port]",
     		     "name = /dev/ttyr07",
     		     "speed = 57600",
